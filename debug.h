@@ -44,8 +44,8 @@
  * This is not thread-safe.
  *
 */
-#define DPRINTF(fmt, ...)
-       fprintf(stderr, "%s(), %s:%d: " fmt,
+#define DPRINTF(fmt, ...) \
+       fprintf(stderr, "%s(), %s:%d: " fmt, \
            __func__, __FILE__, __LINE__, ##__VA_ARGS__)
 #else
 /* no-op */
