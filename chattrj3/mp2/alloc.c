@@ -61,9 +61,27 @@ void *calloc(size_t num, size_t size)
  *
  * @see http://www.cplusplus.com/reference/clibrary/cstdlib/malloc/
  */
+typedef struct _mem_dictionary 
+{
+  void *addr;
+  size_t size;
+} mem_dictionary;
+
+mem_dictionary *dictionary = NULL;
+int dictionary_ct = 0;
+
 void *malloc(size_t size)
 {
-	return NULL;
+//	void *ptr = sbrk(size + sizeof(int));
+void *return_ptr = sbrk(size);
+  
+  if (dictionary == NULL)
+    dictionary = sbrk(1024 * sizeof(mem_dictionary)); /* Note the use of sbrk() and not malloc(), since malloc() would create an infinite loop of calling malloc(). */
+  dictionary[dictionary_ct].addr = return_ptr;
+  dictionary[dictionary_ct].size = size;
+  dictionary_ct++;
+  
+  return return_ptr;	
 }
 
 
@@ -139,7 +157,7 @@ void free(void *ptr)
  * @see http://www.cplusplus.com/reference/clibrary/cstdlib/realloc/
  */
 void *realloc(void *ptr, size_t size)
-{
+{/*
 	 // "In case that ptr is NULL, the function behaves exactly as malloc()"
 	if (!ptr)
 		return malloc(size);
@@ -155,5 +173,23 @@ void *realloc(void *ptr, size_t size)
 
 
 
-	return NULL;
+	return NULL; */
+
+if (!size) { free(ptr); return NULL; }
+  
+  void *return_ptr = malloc(size);
+  
+  if (!ptr)
+    return return_ptr;
+  
+  size_t old_size = 0;
+  int i;
+  for (i = 0; i < dictionary_ct; i++)
+    if (dictionary[i].addr == ptr)
+      old_size = dictionary[i].size;
+  
+  memcpy(return_ptr, ptr, old_size); 
+  free(ptr);
+  
+  return return_ptr;
 }
