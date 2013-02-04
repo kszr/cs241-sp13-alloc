@@ -63,25 +63,22 @@ void *calloc(size_t num, size_t size)
  */
 typedef struct _mem_dictionary 
 {
-  void *addr;
+  char *in_use;
   size_t size;
 } mem_dictionary;
 
-mem_dictionary *dictionary = NULL;
-int dictionary_ct = 0;
+/*mem_dictionary *dictionary = NULL;
+int dictionary_ct = 0; */
 
 void *malloc(size_t size)
 {
-//	void *ptr = sbrk(size + sizeof(int));
-void *return_ptr = sbrk(size);
-  
-  if (dictionary == NULL)
-    dictionary = sbrk(1024 * sizeof(mem_dictionary)); /* Note the use of sbrk() and not malloc(), since malloc() would create an infinite loop of calling malloc(). */
-  dictionary[dictionary_ct].addr = return_ptr;
-  dictionary[dictionary_ct].size = size;
-  dictionary_ct++;
-  
-  return return_ptr;	
+	void *return_ptr = sbrk(size+5);
+	char *in_use = (char *) return_ptr;
+	*in_use = '1';
+	size_t *_size = (size_t *) (return_ptr+1);
+	*_size = size;	
+	
+  	return return_ptr + 5;	
 }
 
 
