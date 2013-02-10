@@ -63,12 +63,10 @@ void *calloc(size_t num, size_t size)
  */
 
 static char *_start = NULL;
-static int _heap_size = 0;
 
 typedef struct _metadata {
-	char _in_use; //1 - in use; 0 - free
 	size_t _size; //the size in bytes of the current block
-	struct metadata *_next; //a pointer to the next free block of memory
+	struct _metadata *_next; //a pointer to the next free block of memory
 } metadata;
 
 static metadata *_head = NULL; //the head of the free list structure
@@ -88,18 +86,14 @@ static metadata *_head = NULL; //the head of the free list structure
 
 void *malloc(size_t size)
 {
-	if(_start == NULL) //If the heap is empty
+	if(!_start) //If the heap is empty
 	{	
 		_start = (char *) sbrk(0);
-		sbrk(size+sizeof(metadata));
-		//Storing metadata worth a lot of bytes with each allocation.
 		char *return_ptr = (char *) sbrk(size+sizeof(metadata));
 		metadata *data = (metadata *) return_ptr;
-		data->_in_use = '1'; //This is not really useful, since we are using a free list.
 		data->_next = NULL;
 		data->_size = size;
 		return_ptr += sizeof(metadata);
-		_heap_size += size+sizeof(metadata); //It is doubtful whether we will need this.
 		return return_ptr;
 	}
 
@@ -111,7 +105,6 @@ void *malloc(size_t size)
 		//if the current free block is big enough to use...
 		if(curr->_size >= size)
 		{
-			curr->_in_use = '0';
 			//If curr is other than _head
 			if(prev)
 				prev->_next = curr->_next;	
@@ -122,7 +115,7 @@ void *malloc(size_t size)
 		
 			curr->_next = NULL;
 		
-			return (void *) ( (char *) curr + sizeof(metadata));
+			return (char *) curr + sizeof(metadata);
 		}
 		prev = curr;
 		curr = curr->_next;
@@ -134,9 +127,7 @@ void *malloc(size_t size)
  	 */
     char *ptr = (char *) sbrk(size+sizeof(metadata));
 	metadata *data = (metadata *) ptr;
-    data->_in_use = '1';
     data->_size = size;
-    _heap_size += size+sizeof(metadata);
     return ptr + sizeof(metadata);
 }
 
@@ -165,8 +156,12 @@ void free(void *ptr)
 
 	//Look at the metadata for this block.
 	metadata *freed = (metadata *) ( (char *) ptr - sizeof(metadata));
-	freed->_in_use = '0';
 	
+	if(!_head)
+	{	
+		_head = freed;
+		return;
+	}
 	metadata *curr = _head;
 	metadata *prev = NULL;
 
@@ -260,26 +255,7 @@ void *realloc(void *ptr, size_t size)
 		free(ptr);
 		return NULL;
 	}
-
-
-
+	
 	return NULL;
 
-if (!size) { free(ptr); return NULL; }
-  
-  void *return_ptr = malloc(size);
-  
-  if (!ptr)
-    return return_ptr;
-  
-  size_t old_size = 0;
-  int i;
-  for (i = 0; i < dictionary_ct; i++)
-    if (dictionary[i].addr == ptr)
-      old_size = dictionary[i].size;
-  
-  memcpy(return_ptr, ptr, old_size); 
-  free(ptr);
-  
-  return return_ptr;
 }
