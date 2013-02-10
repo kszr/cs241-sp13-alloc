@@ -256,6 +256,12 @@ void *realloc(void *ptr, size_t size)
 		return NULL;
 	}
 	
-	return NULL;
-
+	void *return_ptr = malloc(size);
+	
+	metadata *data = (metadata *) ((char *) ptr - sizeof(metadata));
+	size_t old_size = data->_size;
+	memcpy( (char *) return_ptr + sizeof(metadata), (char *) ptr + sizeof(metadata), old_size);
+	free(ptr);
+	return return_ptr;
 }
+
