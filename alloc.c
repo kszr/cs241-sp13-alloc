@@ -61,24 +61,83 @@ void *calloc(size_t num, size_t size)
  *
  * @see http://www.cplusplus.com/reference/clibrary/cstdlib/malloc/
  */
-typedef struct _mem_dictionary 
-{
-  char *in_use;
-  size_t size;
-} mem_dictionary;
 
-/*mem_dictionary *dictionary = NULL;
-int dictionary_ct = 0; */
+static char *_start = NULL;
+static int _heap_size = 0;
+
+typedef struct _metadata {
+	char _in_use; //1 - in use; 0 - free
+	size_t _size; //the size in bytes of the current block
+	struct metadata *_next; //a pointer to the next free block of memory
+} metadata;
+
+static metadata *_head = NULL; //the head of the free list structure
+
+/**
+ * IMPLEMENTATION PLAN:
+ * The head of the free list structure, composed of links of metadata
+ * whose _in_use bits are set to 0. The head is naturally NULL until
+ * the first free has been made. Every time malloc() is called other
+ * than the very first call, the free list is traversed to ascertain
+ * whether any of the extant free blocks are usable for this purpose.
+ * To this end we use a first-fit strategy. When a block is freed, a
+ * link is added to the link list between links that occur before it
+ * and after it respectively in memory. When a freed block is used
+ * again, it is removed from the linked list.
+ */ 
 
 void *malloc(size_t size)
 {
-	void *return_ptr = sbrk(size+5);
-	char *in_use = (char *) return_ptr;
-	*in_use = '1';
-	size_t *_size = (size_t *) (return_ptr+1);
-	*_size = size;	
-	
-  	return return_ptr + 5;	
+	if(_start == NULL) //If the heap is empty
+	{	
+		_start = (char *) sbrk(0);
+		sbrk(size+sizeof(metadata));
+		//Storing metadata worth a lot of bytes with each allocation.
+		char *return_ptr = (char *) sbrk(size+sizeof(metadata));
+		metadata *data = (metadata *) return_ptr;
+		data->_in_use = '1'; //This is not really useful, since we are using a free list.
+		data->_next = NULL;
+		data->_size = size;
+		return_ptr += sizeof(metadata);
+		_heap_size += size+sizeof(metadata); //It is doubtful whether we will need this.
+		return return_ptr;
+	}
+
+	metadata *curr = _head; //We shall use ptr to iterate through the free list
+	metadata *prev = NULL; 	//There is nothing before the head of a list
+
+	while(curr)
+	{	
+		//if the current free block is big enough to use...
+		if(curr->_size >= size)
+		{
+			curr->_in_use = '0';
+			//If curr is other than _head
+			if(prev)
+				prev->_next = curr->_next;	
+			//If curr is head, though this probably did
+			//not need to be spelt out.
+			if(curr == _head)
+				_head = curr->_next;
+		
+			curr->_next = NULL;
+		
+			return (void *) ( (char *) curr + sizeof(metadata));
+		}
+		prev = curr;
+		curr = curr->_next;
+	}
+	/**
+ 	 * Control will reach this point only if there are no free blocks
+ 	 * in the heap large enough for this allocation. We need to make
+ 	 * the heap larger now.
+ 	 */
+    char *ptr = (char *) sbrk(size+sizeof(metadata));
+	metadata *data = (metadata *) ptr;
+    data->_in_use = '1';
+    data->_size = size;
+    _heap_size += size+sizeof(metadata);
+    return ptr + sizeof(metadata);
 }
 
 
@@ -104,6 +163,40 @@ void free(void *ptr)
 	if (!ptr)
 		return;
 
+	//Look at the metadata for this block.
+	metadata *freed = (metadata *) ( (char *) ptr - sizeof(metadata));
+	freed->_in_use = '0';
+	
+	metadata *curr = _head;
+	metadata *prev = NULL;
+
+	while(curr)
+	{
+		if(curr == _head && curr>freed)
+		{
+			freed->_next = curr;
+			_head = freed;
+			return;
+		}
+		else if(prev < freed && curr > freed)
+		{
+			prev->_next = freed;
+			freed->_next = curr;
+			return;
+		}
+
+		curr = curr->_next;
+		prev = curr;
+	}
+	
+	/**
+ 	 * If this block is located further in the heap than anything
+ 	 * in the free list, then it is to be inserted at the end of
+ 	 * the list. When control exits the while loop, curr is NULL,
+ 	 * and prev is the last link in the list. To this link will
+ 	 * be appended the newly freed block.
+ 	 */
+	prev->_next = curr;
 	return;
 }
 
@@ -154,8 +247,8 @@ void free(void *ptr)
  * @see http://www.cplusplus.com/reference/clibrary/cstdlib/realloc/
  */
 void *realloc(void *ptr, size_t size)
-{/*
-	 // "In case that ptr is NULL, the function behaves exactly as malloc()"
+{
+	// "In case that ptr is NULL, the function behaves exactly as malloc()"
 	if (!ptr)
 		return malloc(size);
 
@@ -170,7 +263,7 @@ void *realloc(void *ptr, size_t size)
 
 
 
-	return NULL; */
+	return NULL;
 
 if (!size) { free(ptr); return NULL; }
   
