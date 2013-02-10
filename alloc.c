@@ -94,7 +94,6 @@ void *malloc(size_t size)
 		data->_next = NULL;
 		data->_size = size;
 		return_ptr += sizeof(metadata);
-printf("Statement 1\n");
 		return return_ptr;
 	}
 
@@ -115,7 +114,6 @@ printf("Statement 1\n");
 				_head = curr->_next;
 		
 			curr->_next = NULL;
-printf("Malloc loop\n");
 			return (char *) curr + sizeof(metadata);
 		}
 		prev = curr;
@@ -129,7 +127,6 @@ printf("Malloc loop\n");
     char *ptr = (char *) sbrk(size+sizeof(metadata));
 	metadata *data = (metadata *) ptr;
     data->_size = size;
-printf("Malloc end\n");
     return ptr + sizeof(metadata);
 }
 
@@ -162,7 +159,6 @@ void free(void *ptr)
 	if(!_head)
 	{	
 		_head = freed;
-printf("free head\n");
 		return;
 	}
 
@@ -186,7 +182,6 @@ printf("free head\n");
 
 		prev = curr;
 		curr = curr->_next;
-printf("Free loop\n");
 	}
 	
 	/**
@@ -196,9 +191,7 @@ printf("Free loop\n");
  	 * and prev is the last link in the list. To this link will
  	 * be appended the newly freed block.
  	 */
-printf("nearly freed\n");
 	prev->_next = curr;
-printf("Free end\n");
 	return;
 }
 
