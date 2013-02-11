@@ -101,10 +101,23 @@ void *malloc(size_t size)
 
 	metadata *curr = _head; //We shall use ptr to iterate through the free list
 	metadata *prev = NULL; 	//There is nothing before the head of a list
-
+	
+	metadata *best = NULL;
+	metadata *prev_best = NULL;
+	
 	while(curr)
 	{	
+		if(curr->_size >= size && (best == NULL || curr->_size < best->_size)) {
+			best = curr;
+			prev_best = prev;
+		}
+		prev = curr;
+		curr = curr->_next;
+	}
+	if(best) {	
 		//if the current free block is big enough to use...
+		curr = best;
+		prev = prev_best;
 		if(curr->_size >= size)
 		{
 			//If curr is other than _head
@@ -119,8 +132,8 @@ void *malloc(size_t size)
 			curr->_data_size = size;
 			return (char *) curr + sizeof(metadata);
 		}
-		prev = curr;
-		curr = curr->_next;
+		//prev = curr;
+		//curr = curr->_next;
 	}
 	/**
  	 * Control will reach this point only if there are no free blocks
