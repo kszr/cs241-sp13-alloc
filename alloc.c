@@ -275,9 +275,7 @@ void *realloc(void *ptr, size_t size)
 		return ptr;
 	}
 
-printf("statement 2\n");
 	memmove(return_ptr, ptr, min(old_size, size));
-printf("statement 3\n");
 	free(ptr);
 	return return_ptr;
 }
