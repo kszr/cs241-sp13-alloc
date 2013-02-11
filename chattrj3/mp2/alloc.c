@@ -66,6 +66,7 @@ static char *_start = NULL;
 
 typedef struct _metadata {
 	size_t _size; //the size in bytes of the current block
+	size_t _data_size; //the actual size of the data
 	struct _metadata *_next; //a pointer to the next free block of memory
 } metadata;
 
@@ -93,6 +94,7 @@ void *malloc(size_t size)
 		metadata *data = (metadata *) return_ptr;
 		data->_next = NULL;
 		data->_size = size;
+		data->_data_size = size;
 		return_ptr += sizeof(metadata);
 		return return_ptr;
 	}
@@ -114,6 +116,7 @@ void *malloc(size_t size)
 				_head = curr->_next;
 		
 			curr->_next = NULL;
+			curr->_data_size = size;
 			return (char *) curr + sizeof(metadata);
 		}
 		prev = curr;
@@ -127,6 +130,7 @@ void *malloc(size_t size)
     char *ptr = (char *) sbrk(size+sizeof(metadata));
 	metadata *data = (metadata *) ptr;
     data->_size = size;
+	data->_data_size = size;
     return ptr + sizeof(metadata);
 }
 
@@ -258,9 +262,12 @@ void *realloc(void *ptr, size_t size)
 	
 	void *return_ptr = malloc(size);
 	
+printf("statement 1\n");
 	metadata *data = (metadata *) ((char *) ptr - sizeof(metadata));
-	size_t old_size = data->_size;
+	size_t old_size = data->_data_size;
+printf("statement 2\n");
 	memcpy( (char *) return_ptr + sizeof(metadata), (char *) ptr + sizeof(metadata), old_size);
+printf("statement 3\n");
 	free(ptr);
 	return return_ptr;
 }
