@@ -166,11 +166,13 @@ void free(void *ptr)
 		_head = freed;
 		return;
 	}
+	
+	freed->_next = _head;
+	_head = freed;
+	//metadata *curr = _head;
+	//metadata *prev = NULL;
 
-	metadata *curr = _head;
-	metadata *prev = NULL;
-
-	while(curr)
+	/*while(curr)
 	{
 		if(curr == _head && curr>freed)
 		{
@@ -187,7 +189,7 @@ void free(void *ptr)
 
 		prev = curr;
 		curr = curr->_next;
-	}
+	}*/
 	
 	/**
  	 * If this block is located further in the heap than anything
@@ -196,7 +198,7 @@ void free(void *ptr)
  	 * and prev is the last link in the list. To this link will
  	 * be appended the newly freed block.
  	 */
-	prev->_next = curr;
+	//prev->_next = curr;
 	return;
 }
 
