@@ -266,7 +266,7 @@ printf("statement 1\n");
 	metadata *data = (metadata *) ((char *) ptr - sizeof(metadata));
 	size_t old_size = data->_data_size;
 printf("statement 2\n");
-	memcpy( (char *) return_ptr + sizeof(metadata), (char *) ptr + sizeof(metadata), old_size);
+	memmove( (char *) return_ptr + sizeof(metadata), (char *) ptr + sizeof(metadata), old_size);
 printf("statement 3\n");
 	free(ptr);
 	return return_ptr;
