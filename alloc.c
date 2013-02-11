@@ -159,6 +159,7 @@ void free(void *ptr)
 
 	//Look at the metadata for this block.
 	metadata *freed = (metadata *) ( (char *) ptr - sizeof(metadata));
+	freed->_data_size = 0;
 	
 	if(!_head)
 	{	
@@ -265,14 +266,18 @@ void *realloc(void *ptr, size_t size)
 	}
 	
 	void *return_ptr = malloc(size);
-	
-printf("statement 1\n");
 	metadata *data = (metadata *) ((char *) ptr - sizeof(metadata));
 	size_t old_size = data->_data_size;
+	
+	if(size >= data->_data_size && size <= data->_size)
+	{
+		data->_data_size = size;
+		return ptr;
+	}
+
 printf("statement 2\n");
-	memmove( (char *) return_ptr + sizeof(metadata), (char *) ptr + sizeof(metadata), min(old_size, size));
+	memmove(return_ptr, ptr, min(old_size, size));
 printf("statement 3\n");
 	free(ptr);
 	return return_ptr;
 }
-
